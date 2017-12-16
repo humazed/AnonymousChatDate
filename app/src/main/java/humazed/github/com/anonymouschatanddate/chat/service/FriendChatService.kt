@@ -55,13 +55,10 @@ class FriendChatService : Service(), AnkoLogger {
         listKey = ArrayList()
         mapBitmap = HashMap()
         updateOnline = object : CountDownTimer(System.currentTimeMillis(), StaticConfig.TIME_TO_REFRESH) {
-            override fun onTick(l: Long) {
-                ServiceUtils.updateUserStatus(applicationContext)
-            }
+            override fun onTick(l: Long) = ServiceUtils.updateUserStatus(applicationContext)
 
             override fun onFinish() {}
-        }
-        updateOnline.start()
+        }.start()
 
         if (listFriend.size > 0 || listGroup.size > 0) {
             warn { "listFriend.size = ${listFriend.size}" }
@@ -156,9 +153,7 @@ class FriendChatService : Service(), AnkoLogger {
 
     override fun onDestroy() {
         super.onDestroy()
-        for (id in listKey) {
-            mapQuery[id]?.removeEventListener(mapChildEventListenerMap[id])
-        }
+        listKey.forEach { id -> mapQuery[id]?.removeEventListener(mapChildEventListenerMap[id]) }
         mapQuery.clear()
         mapChildEventListenerMap.clear()
         mapBitmap.clear()

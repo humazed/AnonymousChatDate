@@ -56,8 +56,7 @@ object ServiceUtils : AnkoLogger {
                 context.unbindService(connectionServiceFriendChatForStart!!)
             }
             connectionServiceFriendChatForStart = object : ServiceConnection {
-                override fun onServiceConnected(className: ComponentName,
-                                                service: IBinder) {
+                override fun onServiceConnected(className: ComponentName, service: IBinder) {
                     val binder = service as FriendChatService.LocalBinder
                     for (friend in binder.service.listFriend) {
                         binder.service.mapMark.put(friend.idRoom, true)

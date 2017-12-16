@@ -26,11 +26,14 @@ import humazed.github.com.anonymouschatanddate.chat.data.FriendDB
 import humazed.github.com.anonymouschatanddate.chat.data.StaticConfig
 import humazed.github.com.anonymouschatanddate.chat.model.Friend
 import humazed.github.com.anonymouschatanddate.chat.model.ListFriend
+import humazed.github.com.anonymouschatanddate.chat.model.Status
 import humazed.github.com.anonymouschatanddate.chat.service.ServiceUtils
+import humazed.github.com.anonymouschatanddate.utils.random
 import kotlinx.android.synthetic.main.fragment_people.*
 import org.jetbrains.anko.AnkoLogger
 import org.jetbrains.anko.warn
 import java.util.*
+import kotlin.collections.Map.Entry
 
 class FriendsFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, AnkoLogger {
 
@@ -55,11 +58,10 @@ class FriendsFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, AnkoLo
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
+        ServiceUtils.updateUserStatus(context!!)
         detectFriendOnline = object : CountDownTimer(System.currentTimeMillis(), StaticConfig.TIME_TO_REFRESH) {
             override fun onTick(l: Long) {
                 dataListFriend?.let { ServiceUtils.updateFriendStatus(context!!, it) }
-                ServiceUtils.updateUserStatus(context!!)
             }
 
             override fun onFinish() {}
@@ -207,6 +209,9 @@ class FriendsFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, AnkoLo
         }
     }
 
+    ///////////////////////////////////////////////////////////////////////////
+    // FragFriendClickFloatButton
+    ///////////////////////////////////////////////////////////////////////////
     inner class FragFriendClickFloatButton : View.OnClickListener {
         internal lateinit var context: Context
         internal lateinit var dialogWait: LovelyProgressDialog
@@ -230,26 +235,27 @@ class FriendsFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, AnkoLo
         }
 
         private fun getRandomEmail(usersHashMap: HashMap<String, HashMap<String, *>>): String {
-            fun isOnlineAndNotTheCurrentUser(user: HashMap<String, *>?): Boolean {
-                val email = user?.get("email") as String
-                val status = user["status"] as HashMap<String, *>?
+            fun isOnlineAndNotTheCurrentUser(user: Entry<String, HashMap<String, *>>): Boolean {
+                val email = user.value["email"] as String
+                val status = user.value["status"] as HashMap<String, *>?
                 val isOnline = status?.get("online") as Boolean
-                return FirebaseAuth.getInstance().currentUser?.email != email && isOnline
+                return isOnline && !isFriend(user.key) && FirebaseAuth.getInstance().currentUser?.email != email
             }
 
-            fun returnEmail(user: HashMap<String, *>?): String {
-                val email = user?.get("email") as String
+            fun returnEmail(user: HashMap<String, *>): String {
+                val email = user["email"] as String
                 warn { "email = $email" }
                 return email
             }
 
-            usersHashMap.values.filter { isOnlineAndNotTheCurrentUser(it) }.forEach { returnEmail(it) }
+            val randomOnlineUser = usersHashMap.filter { isOnlineAndNotTheCurrentUser(it) }.values.toList().random()
+            randomOnlineUser?.let { return returnEmail(it) }
 
-            val rand = Random().nextInt(usersHashMap.size)
-            val user: HashMap<String, *>? = usersHashMap[usersHashMap.keys.toTypedArray()[rand]]
-
+            val user: HashMap<String, *> = usersHashMap[usersHashMap.keys.toList().random()]!!
             return returnEmail(user)
         }
+
+        private fun isFriend(friendId: String) = listFriendID != null && listFriendID!!.contains(friendId)
 
 
         /**
@@ -278,6 +284,8 @@ class FriendsFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, AnkoLo
                             user.email = userMap["email"] as String
                             user.avata = userMap["avata"] as String
                             user.id = id
+                            val status = userMap["status"] as HashMap<*, *>
+                            user.status = Status(status["online"] as Boolean, status["timestamp"] as Long)
                             user.idRoom = if (id > StaticConfig.UID) (StaticConfig.UID + id).hashCode().toString()
                             else (id + StaticConfig.UID).hashCode().toString()
 
@@ -301,7 +309,7 @@ class FriendsFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, AnkoLo
         /**
          * show the friend list of a UID
          */
-        private fun checkBeforeAddFriend(idFriend: String, userInfo: Friend) {
+        private fun checkBeforeAddFriend(friendId: String, userInfo: Friend) {
             dialogWait.setCancelable(false)
                     .setIcon(R.drawable.ic_add_friend)
                     .setTitle("Add friend....")
@@ -309,7 +317,7 @@ class FriendsFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, AnkoLo
                     .show()
 
             // Check if id exists in id list
-            if (listFriendID != null && listFriendID!!.contains(idFriend)) {
+            if (isFriend(friendId)) {
                 dialogWait.dismiss()
                 LovelyInfoDialog(context)
                         .setTopColorRes(R.color.colorPrimary)
@@ -319,8 +327,8 @@ class FriendsFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, AnkoLo
                         .setMessage("Didn't find any one please try again")
                         .show()
             } else {
-                addFriend(idFriend)
-                listFriendID?.add(idFriend)
+                addFriend(friendId, userInfo)
+                listFriendID?.add(friendId)
                 dataListFriend?.listFriend?.add(userInfo) // FIXME: 12/16/2017 some NPE
                 FriendDB.getInstance(getContext()).addFriend(userInfo)
                 adapter?.notifyDataSetChanged()
@@ -330,15 +338,15 @@ class FriendsFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, AnkoLo
         /**
          * Add friend
          *
-         * @param idFriend
+         * @param friendId
          */
-        private fun addFriend(idFriend: String) {
-            ref.child("friend/${StaticConfig.UID}").push().setValue(idFriend).addOnCompleteListener { task ->
+        private fun addFriend(friendId: String, userInfo: Friend) {
+            ref.child("friend/${StaticConfig.UID}").push().setValue(friendId).addOnCompleteListener { task ->
                 if (task.isSuccessful) {
-                    ref.child("friend/$idFriend").push().setValue(StaticConfig.UID).addOnCompleteListener { task1 ->
+                    ref.child("friend/$friendId").push().setValue(StaticConfig.UID).addOnCompleteListener { task1 ->
                         if (task1.isSuccessful) {
                             dialogWait.dismiss()
-                            showSuccessDialog()
+                            showSuccessDialog(userInfo)
                         }
                     }.addOnFailureListener {
                         dialogWait.dismiss()
@@ -351,11 +359,12 @@ class FriendsFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, AnkoLo
             }
         }
 
-        private fun showSuccessDialog() = LovelyInfoDialog(context)
+        private fun showSuccessDialog(userInfo: Friend) = LovelyInfoDialog(context)
                 .setTopColorRes(color.colorPrimary)
                 .setIcon(drawable.ic_add_friend)
-                .setTitle("Success")
-                .setMessage("Add friend success")
+                .setTitle("Added ${userInfo.name}")
+                .setMessage(if (userInfo.status.online) "${userInfo.name} is online say hi" else
+                    "${userInfo.name} is offline, we didn't find any one online")
                 .show()
 
 
@@ -363,7 +372,7 @@ class FriendsFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener, AnkoLo
                 .setTopColorRes(color.colorAccent)
                 .setIcon(drawable.ic_add_friend)
                 .setTitle("Failed")
-                .setMessage("Failed to add friend")
+                .setMessage("Failed to find any one try again later")
                 .show()
     }
 }

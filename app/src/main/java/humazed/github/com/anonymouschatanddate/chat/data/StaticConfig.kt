@@ -19,6 +19,6 @@ object StaticConfig {
     const val INTENT_KEY_CHAT_AVATA = "friendavata"
     const val INTENT_KEY_CHAT_ID = "friendid"
     const val INTENT_KEY_CHAT_ROOM_ID = "roomid"
-    @JvmStatic val TIME_TO_REFRESH: Long = 10.seconds.inMilliseconds.longValue
-    @JvmStatic val TIME_TO_OFFLINE = 2.minutes.inMilliseconds.longValue
+    @JvmStatic val TIME_TO_REFRESH: Long = 5.seconds.inMilliseconds.longValue
+    @JvmStatic val TIME_TO_OFFLINE = 5.minutes.inMilliseconds.longValue
 }

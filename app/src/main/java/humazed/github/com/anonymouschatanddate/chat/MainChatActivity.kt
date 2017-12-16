@@ -25,6 +25,7 @@ import org.jetbrains.anko.AnkoLogger
 import org.jetbrains.anko.startActivity
 import org.jetbrains.anko.warn
 import java.util.*
+import kotlin.concurrent.timerTask
 
 class MainChatActivity : AppCompatActivity(), AnkoLogger {
 
@@ -42,6 +43,11 @@ class MainChatActivity : AppCompatActivity(), AnkoLogger {
         setSupportActionBar(toolbar)
 
         initFirebase()
+
+        Timer().schedule(timerTask {
+            ServiceUtils.updateUserStatus(applicationContext)
+        }, StaticConfig.TIME_TO_OFFLINE)
+
     }
 
     private fun initFirebase() {
@@ -112,7 +118,6 @@ class MainChatActivity : AppCompatActivity(), AnkoLogger {
                     fab.visibility = View.VISIBLE
                     fab.setOnClickListener((adapter!!.getItem(position) as FriendsFragment).FragFriendClickFloatButton()
                             .getInstance(this@MainChatActivity))
-                    fab.setImageResource(R.drawable.plus)
                 } else {
                     fab.visibility = View.GONE
                 }
