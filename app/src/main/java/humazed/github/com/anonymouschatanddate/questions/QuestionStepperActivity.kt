@@ -65,7 +65,10 @@ class QuestionStepperActivity : AppCompatActivity(), IStepperAdapter {
 
     private fun saveChoice(choice: String) {
         choices.add(choice)
-        if (!verticalStepperView.nextStep()) startActivity<MainChatActivity>()
+        if (!verticalStepperView.nextStep()) {
+            startActivity<MainChatActivity>()
+            finish()
+        }
     }
 
     override fun onShow(index: Int) {}

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">اسمعلي</string>
+    <string name="app_name">Esma3ly - إسمعلي</string>
 
     <string name="startChat">ابدا</string>
     <string name="loading">جاري التحميل…</string>
@@ -22,5 +22,5 @@
 
     <string name="yes">نعم</string>
     <string name="no">لا</string>
-
+    <string name="send">ارسل</string>
 </resources>

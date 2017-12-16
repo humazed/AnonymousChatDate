@@ -11,3 +11,4 @@ libs/
 src/main/res/mipmap-anydpi-v26/
 src/main/res/values-v21/
 .idea/vcs.xml
+app/release/
