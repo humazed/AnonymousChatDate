@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest package="humazed.github.com.anonymouschatanddate"
+          xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.VIBRATE"/>
+
+    <application
+        android:name=".App"
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:largeHeap="true"
+        android:supportsRtl="true"
+        android:theme="@style/AppTheme"
+        android:fullBackupContent="true">
+        <activity
+            android:name=".SplashActivity"
+            android:theme="@style/AppTheme.NoActionBar">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+
+
+        <activity
+            android:name=".chat.MainChatActivity"
+            android:label="@string/app_name"
+            android:launchMode="singleTop"
+            android:screenOrientation="portrait"
+            android:theme="@style/AppTheme.NoActionBar"/>
+
+        <activity
+            android:name=".questions.QuestionStepperActivity"
+            android:launchMode="singleTop"/>
+
+        <activity
+            android:name=".chat.ui.LoginActivity"
+            android:launchMode="singleTop"
+            android:screenOrientation="portrait"
+            android:theme="@style/TranslucentBackground">
+        </activity>
+        <activity
+            android:name=".chat.ui.RegisterActivity"
+            android:launchMode="singleTop"
+            android:theme="@style/Translucent"/>
+        <activity
+            android:name=".chat.ui.ChatActivity"
+            android:parentActivityName=".chat.MainChatActivity"
+            android:screenOrientation="portrait"/>
+
+        <service
+            android:name=".chat.service.FriendChatService"
+            android:exported="false"
+            android:persistent="true"/>
+        <meta-data
+            android:name="preloaded_fonts"
+            android:resource="@array/preloaded_fonts"/>
+    </application>
+</manifest>

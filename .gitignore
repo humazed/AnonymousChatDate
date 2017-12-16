@@ -1,0 +1,13 @@
+*.iml
+.gradle
+/local.properties
+/.idea/workspace.xml
+/.idea/libraries
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+libs/
+src/main/res/mipmap-anydpi-v26/
+src/main/res/values-v21/
+.idea/vcs.xml
